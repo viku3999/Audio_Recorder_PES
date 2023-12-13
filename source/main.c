@@ -28,6 +28,8 @@
 #include "DMA.h"
 #include "TPM.h"
 #include "SysTick.h"
+#include "I2C_KL25Z.h"
+#include "MCP4725.h"
 
 /*******************************************************************************
  * Definitions
@@ -54,20 +56,38 @@ int main(void)
 
     PRINTF("\r\nPES Assignment 7: Waveforms\r\n");
 
-    test_sin();
+//    test_sin();
 
     // Initializing required peripherals
-    Init_DMA();
-    DAC_Init();
-    init_SysTick();
+//    Init_DMA();
+//    DAC_Init();
+//    init_SysTick();
 
     //Starting wave genration
-	Start_Wave_Generation();
+//	Start_Wave_Generation();
 
+//    uint8_t Data=0;
+
+//    Test();
+	Init_I2C();
+//	Set_DAC_Fast(0x000);
+//	Set_DAC(0x000);
+//	Set_DAC_EEPROM(0x0FF);
     while (1)
     {
-    	// Checking if TPM1 flag is set and collecting ADC samples
-    	if(flag)
-    		analyze();
+    	for(uint16_t i=0; i<4096; i++){
+    		Set_DAC(i);
+    		for(int j=0; j<10000; j++);
+    	}
+
+    	for(uint16_t i=4095; i>=0; i--){
+			Set_DAC(i);
+			for(int j=0; j<10000; j++);
+		}
+//    	Data = I2C_Read_Byte(0x62, );
+//    	if(Data != 0){
+//			PRINTF("Got: %d", Data);
+//			Data = 0;
+//    	}
     }
 }
