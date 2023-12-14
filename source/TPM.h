@@ -20,7 +20,7 @@
 
 #include "board.h"
 
-extern bool flag;
+extern bool TPM0_Flag, TPM1_Flag, TPM2_Flag;
 
 extern uint32_t ADC_buff[1024];
 
@@ -28,7 +28,7 @@ extern uint32_t ADC_buff[1024];
  * @brief	Function to sample the DAC output using ADC
  * @return	none
  */
-void analyze();
+//void analyze();
 
 /**
  * @brief		Initializes the TPM0 with the giveen mod value
@@ -43,6 +43,13 @@ void TPM0_Init(uint32_t mod_val);
  * @return		none
  */
 void TPM1_Init(uint32_t mod_val);
+
+/**
+ * @brief		Initializes the TPM1 with the giveen mod value
+ * @param[in]	mod_val -> value to be stored in the MOD register
+ * @return		none
+ */
+void TPM2_Init(uint32_t mod_val);
 
 
 /**
@@ -69,5 +76,20 @@ void Start_TPM1();
  * @return	none
  */
 void Stop_TPM1();
+
+/**
+ * @brief	Function to start TPM2
+ * @return	none
+ */
+void Start_TPM2();
+
+/**
+ * @brief	Function to start TPM2
+ * @return	none
+ */
+void Stop_TPM2();
+
+void Set_MOD_TPM0(uint32_t mod_val);
+void Set_MOD_TPM2(uint32_t mod_val);
 
 #endif /* TPM_H_ */

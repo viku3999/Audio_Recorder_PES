@@ -23,7 +23,7 @@
 
 uint32_t ADC_buff[1024];
 
-bool flag = false;
+bool TPM0_Flag = false, TPM1_Flag = false, TPM2_Flag = false;
 
 int i=0;
 
@@ -55,7 +55,7 @@ void TPM0_Init(uint32_t mod_val){
 	NVIC_EnableIRQ(TPM0_IRQn);
 
 	// Enable DMA
-	TPM0->SC = TPM_SC_DMA(1);
+//	TPM0->SC = TPM_SC_DMA(1);
 }
 
 
@@ -75,8 +75,8 @@ void TPM1_Init(uint32_t mod_val){
 	// Loading the counter
 	TPM1->MOD = TPM_MOD_MOD(mod_val);
 
-	// Setting count direction to upwards and prescaler to 2
-	TPM1->SC = TPM_SC_PS(0);
+	// Setting count direction to upwards and prescaler to 128
+	TPM1->SC = TPM_SC_PS(7);
 
 	// Generate an interrupt at end of counting
 	TPM1->SC |= TPM_SC_TOIE_MASK;
@@ -87,6 +87,34 @@ void TPM1_Init(uint32_t mod_val){
 	NVIC_EnableIRQ(TPM1_IRQn);
 }
 
+
+/**
+ * @brief		Initializes the TPM1 with the giveen mod value
+ * @param[in]	mod_val -> value to be stored in the MOD register
+ * @return		none
+ */
+void TPM2_Init(uint32_t mod_val){
+
+	// Enable clk to TPM0
+	SIM->SCGC6 |= SIM_SCGC6_TPM2_MASK;
+
+	// select TPM clc source and set freq. to 48MHz
+	SIM -> SOPT2 |= (SIM_SOPT2_TPMSRC(1)) | (SIM_SOPT2_PLLFLLSEL_MASK);
+
+	// Loading the counter
+	TPM2->MOD = TPM_MOD_MOD(mod_val);
+
+	// Setting count direction to upwards and prescaler to 128
+	TPM2->SC = TPM_SC_PS(7);
+
+	// Generate an interrupt at end of counting
+	TPM2->SC |= TPM_SC_TOIE_MASK;
+
+	// Configure NVIC
+	NVIC_SetPriority(TPM2_IRQn, 128); // 0, 64, 128 or 192
+	NVIC_ClearPendingIRQ(TPM2_IRQn);
+	NVIC_EnableIRQ(TPM2_IRQn);
+}
 
 /**
  * @brief	Function to start TPM0
@@ -107,6 +135,15 @@ void Start_TPM1(){
 	TPM1->SC |= TPM_SC_CMOD(1);
 }
 
+/**
+ * @brief	Function to start TPM2
+ * @return	none
+ */
+void Start_TPM2(){
+// Enable counter
+	TPM2->SC |= TPM_SC_CMOD(1);
+}
+
 
 /**
  * @brief	Function to stop TPM0
@@ -125,6 +162,23 @@ void Stop_TPM1(){
 	TPM1->SC &= ~TPM_SC_CMOD_MASK;
 }
 
+/**
+ * @brief	Function to stop TPM2
+ * @return	none
+ */
+void Stop_TPM2(){
+	TPM2->SC &= ~TPM_SC_CMOD_MASK;
+}
+
+void Set_MOD_TPM0(uint32_t mod_val){
+	// Loading the counter
+	TPM0->MOD = TPM_MOD_MOD(mod_val);
+}
+
+void Set_MOD_TPM2(uint32_t mod_val){
+	// Loading the counter
+	TPM2->MOD = TPM_MOD_MOD(mod_val);
+}
 
 /**
  * @brief	TPM0 Interrupt handler
@@ -133,7 +187,7 @@ void Stop_TPM1(){
 void TPM0_IRQHandler(){
 	//clear pending IRQ
 	NVIC_ClearPendingIRQ(TPM0_IRQn);
-
+	TPM0_Flag = true;
 	// Clear Interrupt flag
 	TPM0->SC |= TPM_SC_TOF_MASK;
 }
@@ -147,35 +201,23 @@ void TPM1_IRQHandler(){
 	NVIC_ClearPendingIRQ(TPM1_IRQn);
 
 	// set TPM1_IRQ flag as true
-	flag = true;
+	TPM1_Flag = true;
 
 	// Clear Interrupt flag
 	TPM1->SC |= TPM_SC_TOF_MASK;
 }
 
 /**
- * @brief	Function to sample the DAC output using ADC
+ * @brief	TPM1 Interrupt handler
  * @return	none
  */
-void analyze()
-{
-	//	 Start ADC conversion on channel 0 and using DAC0 o/p as the i/p for ADC
-		ADC0->SC1[0] = ADC_SC1_DIFF(0) | ADC_SC1_ADCH(23);
+void TPM2_IRQHandler(){
+	//clear pending IRQ
+	NVIC_ClearPendingIRQ(TPM2_IRQn);
 
-	//	 Wait till conversion is complete
-		while ((ADC0->SC2 & ADC_SC2_ADACT_MASK));
-		while (!(ADC0->SC1[0] & ADC_SC1_COCO_MASK));
+	// set TPM1_IRQ flag as true
+	TPM2_Flag = true;
 
-		// Store ADC conversion value in the buffer
-		ADC_buff[i++] = ADC0->R[0];
-
-		// Check if buffer is filled, stop TPM1 and start waveform analysis
-		if(i == 1024){
-			Stop_TPM1();
-			i=0;
-			Waveform_Analyze();
-		}
-
-		// set TPM1_IRQ flag as false
-		flag = false;
+	// Clear Interrupt flag
+	TPM2->SC |= TPM_SC_TOF_MASK;
 }

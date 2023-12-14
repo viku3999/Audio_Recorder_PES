@@ -9,22 +9,23 @@
  * ****************************************************************************/
 
 /**
- * @file    ADC.c
- * @brief   Header file for ADC module implementation
+ * @file    RGB_LED.h
+ * @brief   Required setup and interface functions prototypes to use the RGB
+ * 			LED on the KL25Z dev board
  * @author  Vishnu Kumar Thoodur Venkatachalapathy
- * @date    Dec 1, 2023
+ * @date    Oct 2, 2023
  */
 
-#ifndef ADC_H_
-#define ADC_H_
+// Pin and port definitions for the onboard RGB LED
+#define RED_LED_PIN		(18)
+#define	GREEN_LED_PIN	(19)
+#define	BLUE_LED_PIN	(1)
+#define RED_PORT	PTB
+#define GREEN_PORT	PTB
+#define BLUE_PORT	PTD
 
-#include "board.h"
+#define MASK(x) (1UL << (x))
 
-/**
- * @brief	Function to initialize the ADC module. Written by referencing dean's book
- * @return	none
- */
-void init_ADC0();
-uint16_t Get_ADC_Val();
+void LED_SETUP();
 
-#endif /* ADC_H_ */
+void LED_CONTROL(uint32_t r, uint32_t g, uint32_t b);

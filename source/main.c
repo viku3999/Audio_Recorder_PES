@@ -10,9 +10,9 @@
 
 /**
  * @file    main.c
- * @brief   Implementation of the funciton wave generator
+ * @brief   Implementation of the audio recorder and playback device
  * @author  Vishnu Kumar Thoodur Venkatachalapathy
- * @date    Dec 1, 2023
+ * @date    Dec 12, 2023
  */
 
 #include "fsl_device_registers.h"
@@ -20,20 +20,38 @@
 #include "board.h"
 
 #include "pin_mux.h"
-#include "test_sine.h"
+//#include "test_sine.h"
 
 #include <stdio.h>
-#include "DAC.h"
-#include "Waveforms.h"
-#include "DMA.h"
+//#include "DAC.h"
+//#include "Waveforms.h"
+//#include "DMA.h"
 #include "TPM.h"
-#include "SysTick.h"
+//#include "SysTick.h"
 #include "I2C_KL25Z.h"
 #include "MCP4725.h"
+#include "ADC.h"
+#include "RGB_LED.h"
 
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
+#define NUM_IP_SAMPLES 6615
+
+#define MOD_VAL_T2_NOTE_A 426
+#define MOD_VAL_T2_NOTE_B 380
+#define MOD_VAL_T2_NOTE_C 717
+#define MOD_VAL_T2_NOTE_D 639
+#define MOD_VAL_T2_NOTE_E 569
+#define MOD_VAL_T2_NOTE_F 537
+#define MOD_VAL_T2_NOTE_G 478
+
+#define MOD_VAL_T1_10Hz 39024
+
+#define MOD_VAL_T0_IP_SAMPLING 1088  // Set timer 0 to 44.1KHz
+#define MOD_VAL_T0_OP	24000	 // Set timer 0 to 2KHz so that the final o/p
+								 // playback frequency shall be 1KHz
+
 
 
 /*******************************************************************************
@@ -44,6 +62,108 @@
  * Code
  ******************************************************************************/
 
+/**
+ * @brief	Function to Sample Audio using a KY-037 microphone module and
+ * 			playback the sampled audio
+ * @return	none
+ */
+void Sample_Voice(){
+	int time_ctr = 0, i=0;
+	uint16_t Mic_Vals[NUM_IP_SAMPLES];
+
+    LED_CONTROL(1,0,0);
+    PRINTF("\r\nStarting Voice Sample");
+	Set_MOD_TPM0(MOD_VAL_T0_IP_SAMPLING);
+	Start_TPM1();
+	Start_TPM0();
+
+	while(1){
+		if(TPM1_Flag){
+			time_ctr++;
+			if(time_ctr >= 10)
+				break;
+			TPM1_Flag = 0;
+		}
+
+		if(TPM0_Flag){
+			Mic_Vals[i++] = Get_ADC_Val();
+			if(i>=NUM_IP_SAMPLES){
+				break;
+			}
+			TPM0_Flag = 0;
+		}
+	}
+
+	Stop_TPM0();
+	Stop_TPM1();
+
+    PRINTF("\r\nVoice Sampled\r\nStarting Playback");
+	Set_MOD_TPM0(MOD_VAL_T0_OP);
+    LED_CONTROL(0,0,1);
+
+	Start_TPM0();
+	i=0;
+	while(1){
+		if(TPM0_Flag){
+			TPM0_Flag = 0;
+			Set_DAC_Fast(Mic_Vals[i++]);
+			while(TPM0_Flag == 0);
+			Set_DAC_Fast(0x000);
+			TPM0_Flag = 0;
+			while(TPM0_Flag == 0);
+			if(i>=NUM_IP_SAMPLES){
+				break;
+			}
+		}
+	}
+	LED_CONTROL(0,1,0);
+	PRINTF("\r\nVoice Playback done!");
+}
+
+void Generate_Tone(){
+
+    LED_CONTROL(0,0,1);
+	int Time_ctr = 0;
+	bool Tone_Count = true;
+	Start_TPM1();
+	Start_TPM2();
+	while(1){
+		if(TPM1_Flag){
+			Time_ctr++;
+			if(Time_ctr >= 10)
+				break;
+			TPM1_Flag = 0;
+		}
+
+		if(TPM2_Flag){
+			TPM2_Flag = 0;
+			if(Tone_Count){
+				Set_DAC_Fast(0xFFF);
+				Tone_Count = false;
+			}
+			else{
+				Set_DAC_Fast(0x000);
+				Tone_Count = true;
+			}
+		}
+
+	}
+
+    LED_CONTROL(0,1,0);
+
+}
+
+void Print_Menu(){
+	PRINTF("\r\nA/a -> Play musical note 'A' at OCT 4 for 1sec");
+	PRINTF("\r\nB/b -> Play musical note 'B' at OCT 4 for 1sec");
+	PRINTF("\r\nC/c -> Play musical note 'C' at OCT 4 for 1sec");
+	PRINTF("\r\nD/d -> Play musical note 'D' at OCT 4 for 1sec");
+	PRINTF("\r\nE/e -> Play musical note 'E' at OCT 4 for 1sec");
+	PRINTF("\r\nF/f -> Play musical note 'F' at OCT 4 for 1sec");
+	PRINTF("\r\nG/g -> Play musical note 'G' at OCT 4 for 1sec");
+	PRINTF("\r\nV/v -> Record voice and playback");
+	PRINTF("\r\nEnter Selection: ");
+}
 /*
  * @brief Main function
  */
@@ -53,41 +173,63 @@ int main(void)
     BOARD_InitPins();
     BOARD_BootClockRUN();
     BOARD_InitDebugConsole();
-
-    PRINTF("\r\nPES Assignment 7: Waveforms\r\n");
-
-//    test_sin();
+    TPM0_Init(MOD_VAL_T0_IP_SAMPLING);
+	TPM1_Init(MOD_VAL_T1_10Hz);
+    TPM2_Init(MOD_VAL_T2_NOTE_A);
+    LED_SETUP();
+    LED_CONTROL(0,1,0);
+    PRINTF("\r\nPES Final Project\r\n");
 
     // Initializing required peripherals
-//    Init_DMA();
-//    DAC_Init();
-//    init_SysTick();
-
-    //Starting wave genration
-//	Start_Wave_Generation();
-
-//    uint8_t Data=0;
-
-//    Test();
+    init_ADC0();
 	Init_I2C();
-//	Set_DAC_Fast(0x000);
-//	Set_DAC(0x000);
-//	Set_DAC_EEPROM(0x0FF);
+
+	char User_Ip = '0';
     while (1)
     {
-    	for(uint16_t i=0; i<4096; i++){
-    		Set_DAC(i);
-    		for(int j=0; j<10000; j++);
+    	Print_Menu();
+    	User_Ip = GETCHAR();
+    	PUTCHAR(User_Ip);
+    	switch(User_Ip){
+    		case 'A':
+    		case 'a':	PRINTF("\r\nPlaying Note 'A' for 1sec");
+    					Set_MOD_TPM2(MOD_VAL_T2_NOTE_A);
+    					Generate_Tone();
+    					break;
+    		case 'B':
+    		case 'b':	PRINTF("\r\nPlaying Note 'B' for 1sec");
+    					Set_MOD_TPM2(MOD_VAL_T2_NOTE_B);
+    					Generate_Tone();
+    					break;
+    		case 'C':
+    		case 'c':	PRINTF("\r\nPlaying Note 'C' for 1sec");
+    					Set_MOD_TPM2(MOD_VAL_T2_NOTE_C);
+    					Generate_Tone();
+    					break;
+    		case 'D':
+    		case 'd':	PRINTF("\r\nPlaying Note 'D' for 1sec");
+    					Set_MOD_TPM2(MOD_VAL_T2_NOTE_D);
+    					Generate_Tone();
+    					break;
+    		case 'E':
+    		case 'e':	PRINTF("\r\nPlaying Note 'E' for 1sec");
+    					Set_MOD_TPM2(MOD_VAL_T2_NOTE_E);
+    					Generate_Tone();
+    					break;
+    		case 'F':
+    		case 'f':	PRINTF("\r\nPlaying Note 'F' for 1sec");
+    					Set_MOD_TPM2(MOD_VAL_T2_NOTE_F);
+    					Generate_Tone();
+    					break;
+    		case 'G':
+    		case 'g':	PRINTF("\r\nPlaying Note 'G' for 1sec");
+    					Set_MOD_TPM2(MOD_VAL_T2_NOTE_G);
+    					Generate_Tone();
+    					break;
+    		case 'v':
+    		case 'V':	Sample_Voice();
+    					break;
+    		default:	break;
     	}
-
-    	for(uint16_t i=4095; i>=0; i--){
-			Set_DAC(i);
-			for(int j=0; j<10000; j++);
-		}
-//    	Data = I2C_Read_Byte(0x62, );
-//    	if(Data != 0){
-//			PRINTF("Got: %d", Data);
-//			Data = 0;
-//    	}
     }
 }

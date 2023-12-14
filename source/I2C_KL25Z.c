@@ -19,7 +19,7 @@ void Init_I2C(){
 
 	// I2C Config
 
-	// Setting As master and I2C Baud rate to 100KHz. Mul -> 8, divider -> 0
+	// Setting As master and I2C Baud rate to 100KHz. Mul -> 4, divider -> 0
 	I2C1->F = (0x2 << I2C_F_MULT_SHIFT) | (0x00 << I2C_F_ICR_SHIFT);
 
 	//Enable I2C module

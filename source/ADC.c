@@ -23,8 +23,11 @@
  * @return	none
  */
 void init_ADC0(){
-	// Enable clk to ADC0 and respective pin
+	// Enable clk to ADC0
 	SIM->SCGC6 |= SIM_SCGC6_ADC0_MASK;
+
+	//Enable clk to Port B for the I2C pins
+	SIM->SCGC5 |= SIM_SCGC5_PORTB_MASK;
 
 	// long sample time,
 	// 16 bit single-ended conversion, bus clock input
@@ -34,4 +37,23 @@ void init_ADC0(){
 	// Software trigger, compare function disabled,
 	// DMA disabled, voltage references VREFH and VREFL
 	ADC0->SC2 = ADC_SC2_REFSEL(0);
+
+	// GPIO Config
+	PORTB->PCR[0] |= PORT_PCR_MUX(0); // PB0 -> ADC0SE8
+
+	//	 Start ADC conversion on channel 0 and using DAC0 o/p as the i/p for ADC
+	ADC0->SC1[0] = ADC_SC1_DIFF(0) | ADC_SC1_ADCH(8);
+}
+
+uint16_t Get_ADC_Val(){
+	uint16_t result=0;
+	// Start ADC conversion
+	ADC0->SC1[0] = ADC_SC1_ADCH(8);
+	while ((ADC0->SC2 & ADC_SC2_ADACT_MASK));
+	while (!(ADC0->SC1[0] & ADC_SC1_COCO_MASK));
+
+	// Store ADC conversion value in the buffer
+	result = ADC0->R[0];
+
+	return(result);
 }

@@ -9,22 +9,14 @@
  * ****************************************************************************/
 
 /**
- * @file    ADC.c
- * @brief   Header file for ADC module implementation
+ * @file    LOG.c
+ * @brief   Macro definition to setup DEBUG build and Release build
  * @author  Vishnu Kumar Thoodur Venkatachalapathy
- * @date    Dec 1, 2023
+ * @date    Oct 2, 2023
  */
-
-#ifndef ADC_H_
-#define ADC_H_
-
-#include "board.h"
-
-/**
- * @brief	Function to initialize the ADC module. Written by referencing dean's book
- * @return	none
- */
-void init_ADC0();
-uint16_t Get_ADC_Val();
-
-#endif /* ADC_H_ */
+#include "fsl_debug_console.h"
+#ifdef DEBUG
+#define LOG PRINTF
+#else
+#define LOG(...)
+#endif
