@@ -12,7 +12,7 @@
  * @file    TPM.c
  * @brief   TPM module implementation
  * @author  Vishnu Kumar Thoodur Venkatachalapathy
- * @date    Dec 1, 2023
+ * @date    Dec 12, 2023
  */
 
 #include "TPM.h"
@@ -28,7 +28,7 @@ bool TPM0_Flag = false, TPM1_Flag = false, TPM2_Flag = false;
 int i=0;
 
 /**
- * @brief		Initializes the TPM0 with the giveen mod value
+ * @brief		Initializes the TPM0 with the given mod value
  * @param[in]	mod_val -> value to be stored in the MOD register
  * @return		none
  */
@@ -60,7 +60,7 @@ void TPM0_Init(uint32_t mod_val){
 
 
 /**
- * @brief		Initializes the TPM1 with the giveen mod value
+ * @brief		Initializes the TPM1 with the given mod value
  * @param[in]	mod_val -> value to be stored in the MOD register
  * @return		none
  */
@@ -89,7 +89,7 @@ void TPM1_Init(uint32_t mod_val){
 
 
 /**
- * @brief		Initializes the TPM1 with the giveen mod value
+ * @brief		Initializes the TPM2 with the given mod value
  * @param[in]	mod_val -> value to be stored in the MOD register
  * @return		none
  */
@@ -170,11 +170,22 @@ void Stop_TPM2(){
 	TPM2->SC &= ~TPM_SC_CMOD_MASK;
 }
 
+
+/**
+ * @brief		Sets TPM0 with the given mod value
+ * @param[in]	mod_val -> value to be stored in the MOD register
+ * @return		none
+ */
 void Set_MOD_TPM0(uint32_t mod_val){
 	// Loading the counter
 	TPM0->MOD = TPM_MOD_MOD(mod_val);
 }
 
+/**
+ * @brief		Sets TPM2 with the given mod value
+ * @param[in]	mod_val -> value to be stored in the MOD register
+ * @return		none
+ */
 void Set_MOD_TPM2(uint32_t mod_val){
 	// Loading the counter
 	TPM2->MOD = TPM_MOD_MOD(mod_val);
@@ -208,7 +219,7 @@ void TPM1_IRQHandler(){
 }
 
 /**
- * @brief	TPM1 Interrupt handler
+ * @brief	TPM2 Interrupt handler
  * @return	none
  */
 void TPM2_IRQHandler(){

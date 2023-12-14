@@ -1,8 +1,18 @@
-/*
- * MCP4725.c
+/*******************************************************************************
+ * Copyright (C) 2023 by Vishnu Kumar Thoodur Venkatachalapathy
  *
- *  Created on: Dec 13, 2023
- *      Author: vishn
+ * Redistribution, modification or use of this software in source or binary
+ * forms is permitted as long as the files maintain this copyright. Users are
+ * permitted to modify this and use it to learn about the field of embedded
+ * software. Vishnu Kumar Thoodur Venkatachalapathy and the University of
+ * Colorado are not liable for any misuse of this material.
+ * ****************************************************************************/
+
+/**
+ * @file    MCP4725.h
+ * @brief   Header file for TPM module implementation
+ * @author  Vishnu Kumar Thoodur Venkatachalapathy
+ * @date    Dec 12, 2023
  */
 
 #include "MCP4725.h"
@@ -31,6 +41,11 @@
 #define PD_SHIFT_FAST(x)	(x<<4)
 #define PD_SHIFT(x)	(x<<1)
 
+
+/**
+ * @brief	Function to Test the DAC module by sending 0xFFF as the DAC o/p value
+ * @return	none
+ */
 void Test(){
 	Init_I2C();
     I2C_Repeat_Write_Setup(DEVICE_ADDR);
@@ -41,11 +56,24 @@ void Test(){
     I2C_Stop();
 }
 
+
+/**
+ * @brief		Sets only the DAC with the given value using the fast method
+ * 				given in the module data sheet
+ * @param[in]	Value -> value to be write into the DAC
+ * @return		none
+ */
 void Set_DAC_Fast(uint16_t Value){
 	uint8_t D0=0, D1=0;
+
+	// Setting the D0 with the following config:
+	//	C2, C1 = 0, Power Down mode = 0, Bit 11 to Bit 8 of the given DAC value
+	// Setting D1 to store the first 8 bits of the given DAC value
 	D0 = (CMD_DAC_FAST) | (PD_SHIFT_FAST(PD_0)) | (HIGH_NIBBLE_SHIFT_FAST(Value & HIGH_NIBBLE_FAST));
 	D1 = (Value & LOW_NIBBLE_FAST);
 
+	// Starting the I2C communication by sending the device address in write
+	// mode, sending 4 bytes of data (D0, D1, D0, D1), and stopping communication
     I2C_Repeat_Write_Setup(DEVICE_ADDR);
     I2C_Repeat_Write_Byte(D0);
     I2C_Repeat_Write_Byte(D1);

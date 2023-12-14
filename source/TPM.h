@@ -12,7 +12,7 @@
  * @file    TPM.h
  * @brief   Header file for TPM module implementation
  * @author  Vishnu Kumar Thoodur Venkatachalapathy
- * @date    Dec 1, 2023
+ * @date    Dec 12, 2023
  */
 
 #ifndef TPM_H_
@@ -24,11 +24,6 @@ extern bool TPM0_Flag, TPM1_Flag, TPM2_Flag;
 
 extern uint32_t ADC_buff[1024];
 
-/**
- * @brief	Function to sample the DAC output using ADC
- * @return	none
- */
-//void analyze();
 
 /**
  * @brief		Initializes the TPM0 with the giveen mod value
@@ -45,7 +40,7 @@ void TPM0_Init(uint32_t mod_val);
 void TPM1_Init(uint32_t mod_val);
 
 /**
- * @brief		Initializes the TPM1 with the giveen mod value
+ * @brief		Initializes the TPM2 with the giveen mod value
  * @param[in]	mod_val -> value to be stored in the MOD register
  * @return		none
  */
@@ -62,14 +57,19 @@ void Start_TPM0();
  * @brief	Function to start TPM1
  * @return	none
  */
-void Stop_TPM0();
+void Start_TPM1();
 
+/**
+ * @brief	Function to start TPM2
+ * @return	none
+ */
+void Start_TPM2();
 
 /**
  * @brief	Function to stop TPM0
  * @return	none
  */
-void Start_TPM1();
+void Stop_TPM0();
 
 /**
  * @brief	Function to stop TPM1
@@ -81,15 +81,20 @@ void Stop_TPM1();
  * @brief	Function to start TPM2
  * @return	none
  */
-void Start_TPM2();
+void Stop_TPM2();
+s
+/**
+ * @brief		Sets TPM0 with the given mod value
+ * @param[in]	mod_val -> value to be stored in the MOD register
+ * @return		none
+ */
+void Set_MOD_TPM0(uint32_t mod_val);
 
 /**
- * @brief	Function to start TPM2
- * @return	none
+ * @brief		Sets TPM2 with the given mod value
+ * @param[in]	mod_val -> value to be stored in the MOD register
+ * @return		none
  */
-void Stop_TPM2();
-
-void Set_MOD_TPM0(uint32_t mod_val);
 void Set_MOD_TPM2(uint32_t mod_val);
 
 #endif /* TPM_H_ */

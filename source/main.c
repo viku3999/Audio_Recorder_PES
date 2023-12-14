@@ -71,13 +71,19 @@ void Sample_Voice(){
 	int time_ctr = 0, i=0;
 	uint16_t Mic_Vals[NUM_IP_SAMPLES];
 
+	// Set LED colour to RED to denote the microphone ON
     LED_CONTROL(1,0,0);
     PRINTF("\r\nStarting Voice Sample");
+
+    // Set the TPM0 counter to generate a ITR at 44.1KHz and start TPM0 and 1
 	Set_MOD_TPM0(MOD_VAL_T0_IP_SAMPLING);
 	Start_TPM1();
 	Start_TPM0();
 
 	while(1){
+
+		// Since we cannot set a timer for 1 second, we set a timer for 100ms
+		// count it 10 times to get to 1 second
 		if(TPM1_Flag){
 			time_ctr++;
 			if(time_ctr >= 10)
@@ -85,8 +91,11 @@ void Sample_Voice(){
 			TPM1_Flag = 0;
 		}
 
+		// store the ADC value (microphone data) into a buffer
 		if(TPM0_Flag){
 			Mic_Vals[i++] = Get_ADC_Val();
+
+			// stop i/p gathering when the buffer is full
 			if(i>=NUM_IP_SAMPLES){
 				break;
 			}
@@ -94,11 +103,14 @@ void Sample_Voice(){
 		}
 	}
 
+	// Stop the timers, setup TPM0 to generate a ITR at 2KHz and restart TPM0
 	Stop_TPM0();
 	Stop_TPM1();
 
     PRINTF("\r\nVoice Sampled\r\nStarting Playback");
 	Set_MOD_TPM0(MOD_VAL_T0_OP);
+
+	// Set LED colour to BLUE to denote the buzzer is active
     LED_CONTROL(0,0,1);
 
 	Start_TPM0();
@@ -106,34 +118,57 @@ void Sample_Voice(){
 	while(1){
 		if(TPM0_Flag){
 			TPM0_Flag = 0;
+
+			// set the DAC value to the Microphone data, wait till the TPM0 ISR
+			// gets triggered, reset DAC value to 0, again wait till the TPM0 ISR
+			// again gets triggered
 			Set_DAC_Fast(Mic_Vals[i++]);
 			while(TPM0_Flag == 0);
 			Set_DAC_Fast(0x000);
 			TPM0_Flag = 0;
 			while(TPM0_Flag == 0);
+
+			// exit sequence once we have played through the entire buffer
 			if(i>=NUM_IP_SAMPLES){
 				break;
 			}
 		}
 	}
+
+	// Set LED to GREEN colour to denote that the device is ready for new commands
 	LED_CONTROL(0,1,0);
 	PRINTF("\r\nVoice Playback done!");
 }
 
+/**
+ * @brief	Function to generate a tone at frequency set in TPM2 for 1 second
+ * @return	none
+ */
 void Generate_Tone(){
 
-    LED_CONTROL(0,0,1);
 	int Time_ctr = 0;
 	bool Tone_Count = true;
+
+	// Set LED colour to BLUE to denote the buzzer is active
+    LED_CONTROL(0,0,1);
+
+    // Start TPM1 and 2 for audio playback
 	Start_TPM1();
 	Start_TPM2();
 	while(1){
+
+		// Since we cannot set a timer for 1 second, we set a timer for 100ms
+		// count it 10 times to get to 1 second
 		if(TPM1_Flag){
 			Time_ctr++;
 			if(Time_ctr >= 10)
 				break;
 			TPM1_Flag = 0;
 		}
+
+		// set the DAC value to the 0xFFF (4.9V), wait till the TPM0 ISR gets
+		// triggered, reset DAC value to 0x000 (0V), again wait till the TPM0 ISR
+		// again gets triggered
 
 		if(TPM2_Flag){
 			TPM2_Flag = 0;
@@ -149,10 +184,15 @@ void Generate_Tone(){
 
 	}
 
+	// Set LED to GREEN colour to denote that the device is ready for new commands
     LED_CONTROL(0,1,0);
 
 }
 
+/**
+ * @brief	Prints out all available commands
+ * @return	none
+ */
 void Print_Menu(){
 	PRINTF("\r\nA/a -> Play musical note 'A' at OCT 4 for 1sec");
 	PRINTF("\r\nB/b -> Play musical note 'B' at OCT 4 for 1sec");
@@ -164,6 +204,7 @@ void Print_Menu(){
 	PRINTF("\r\nV/v -> Record voice and playback");
 	PRINTF("\r\nEnter Selection: ");
 }
+
 /*
  * @brief Main function
  */
