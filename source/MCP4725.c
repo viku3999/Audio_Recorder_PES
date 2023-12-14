@@ -9,8 +9,8 @@
  * ****************************************************************************/
 
 /**
- * @file    MCP4725.h
- * @brief   Header file for TPM module implementation
+ * @file    MCP4725.c
+ * @brief   I2C based drivers for the MCP4725 DAC
  * @author  Vishnu Kumar Thoodur Venkatachalapathy
  * @date    Dec 12, 2023
  */
@@ -56,10 +56,9 @@ void Test(){
     I2C_Stop();
 }
 
-
 /**
- * @brief		Sets only the DAC with the given value using the fast method
- * 				given in the module data sheet
+ * @brief		Sets only the onboard DAC with the given value using the fast
+ * 				protocol given in the module data sheet
  * @param[in]	Value -> value to be write into the DAC
  * @return		none
  */
@@ -82,11 +81,26 @@ void Set_DAC_Fast(uint16_t Value){
     I2C_Stop();
 }
 
+/**
+ * @brief		Sets only the onboard DAC with the given value using the
+ * 				protocol given in the module data sheet
+ * @param[in]	Value -> value to be write into the DAC
+ * @return		none
+ */
 void Set_DAC(uint16_t Value){	uint8_t D0=0, D1=0, D2=0;
+
+	// Setting the D0 with the following config:
+	//	C2=0, C1=1, C0=0, Power Down mode = 0,
+	// Setting D1 to store the High 8 Bits of the given DAC value
+	// Setting D2 to store the Low 4 Bits of the given DAC value
 	D0 = (CMD_SHIFT(CMD_DAC)) | PD_SHIFT(PD_0);
 	D1 = HIGH_NIBBLE_SHIFT(Value & HIGH_NIBBLE);
 	D2 = LOW_NIBBLE_SHIFT(Value & LOW_NIBBLE);
 
+
+	// Starting the I2C communication by sending the device address in write
+	// mode, sending 6 bytes of data (D0, D1, D2, D0, D1, D2), and stopping
+	// communication
     I2C_Repeat_Write_Setup(DEVICE_ADDR);
     I2C_Repeat_Write_Byte(D0);
     I2C_Repeat_Write_Byte(D1);
@@ -97,12 +111,27 @@ void Set_DAC(uint16_t Value){	uint8_t D0=0, D1=0, D2=0;
     I2C_Stop();
 }
 
+/**
+ * @brief		Sets the onboard DAC and EEPROM with the given value using the
+ * 				protocol given in the module data sheet.
+ * @param[in]	Value -> value to be write into the DAC and EEPROM
+ * @return		none
+ */
 void Set_DAC_EEPROM(uint16_t Value){
 	uint8_t D0=0, D1=0, D2=0;
+
+	// Setting the D0 with the following config:
+	//	C2=0, C1=1, C0=1, Power Down mode = 0,
+	// Setting D1 to store the High 8 Bits of the given DAC value
+	// Setting D2 to store the Low 4 Bits of the given DAC value
 	D0 = (CMD_SHIFT(CMD_DAC_EEPROM)) | PD_SHIFT(PD_0);
 	D1 = HIGH_NIBBLE_SHIFT(Value & HIGH_NIBBLE);
 	D2 = LOW_NIBBLE_SHIFT(Value & LOW_NIBBLE);
 
+
+	// Starting the I2C communication by sending the device address in write
+	// mode, sending 6 bytes of data (D0, D1, D2, D0, D1, D2), and stopping
+	// communication
     I2C_Repeat_Write_Setup(DEVICE_ADDR);
     I2C_Repeat_Write_Byte(D0);
     I2C_Repeat_Write_Byte(D1);

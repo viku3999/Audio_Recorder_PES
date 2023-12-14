@@ -41,7 +41,7 @@ void init_ADC0(){
 	// GPIO Config
 	PORTB->PCR[0] |= PORT_PCR_MUX(0); // PB0 -> ADC0SE8
 
-	//	 Start ADC conversion on channel 0 and using DAC0 o/p as the i/p for ADC
+	// Start ADC conversion on channel 0 and use the voltage i/p from PB0
 	ADC0->SC1[0] = ADC_SC1_DIFF(0) | ADC_SC1_ADCH(8);
 }
 
